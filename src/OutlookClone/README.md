@@ -15,7 +15,8 @@ The project currently enables Windows when building on Windows and leaves the ot
 
 ```powershell
 dotnet workload install maui-windows
-dotnet build src/OutlookClone/OutlookClone.csproj -f net10.0-windows10.0.19041.0
+dotnet build src/OutlookClone/OutlookClone.csproj #-f net10.0-windows10.0.19041.0
+dotnet run --project src/OutlookClone/OutlookClone.csproj
 ```
 
 To explicitly keep the project Windows-only, replace the target framework declarations in [OutlookClone.csproj](OutlookClone.csproj) with:

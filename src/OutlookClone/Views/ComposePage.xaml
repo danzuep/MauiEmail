@@ -3,6 +3,8 @@
     x:Class="OutlookClone.Views.ComposePage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:viewModels="clr-namespace:OutlookClone.ViewModels"
+    x:DataType="viewModels:SenderViewModel"
     Title="New message">
     <Grid
         Padding="20"

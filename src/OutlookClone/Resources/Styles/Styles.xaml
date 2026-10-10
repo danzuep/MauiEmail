@@ -75,7 +75,7 @@
         </Setter>
     </Style>
 
-    <Style TargetType="CheckBox">
+    <Style x:Key="DefaultCheckBoxStyle" TargetType="CheckBox">
         <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" />
         <Setter Property="VisualStateManager.VisualStateGroups">

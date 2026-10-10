@@ -2,12 +2,15 @@
 <ContentView
     x:Class="OutlookClone.Views.InboxView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:models="clr-namespace:OutlookClone.Models"
+    xmlns:views="clr-namespace:OutlookClone.Views"
+    x:DataType="views:InboxView">
     <Grid RowDefinitions="56,*">
         <Grid
             Padding="20,0"
             BackgroundColor="{StaticResource Primary}"
-            ColumnDefinitions="Auto,Auto,*,180,Auto">
+            ColumnDefinitions="Auto,Auto,*,180,Auto,Auto">
             <Label
                 FontAttributes="Bold"
                 FontSize="20"
@@ -26,18 +29,6 @@
                 TextColor="White"
                 ToolTipProperties.Text="Toggle light and dark theme"
                 WidthRequest="40" />
-            <Button
-                x:Name="SearchButton"
-                Grid.Column="4"
-                BackgroundColor="Transparent"
-                Clicked="OnSearchClicked"
-                FontFamily="FluentRegular"
-                FontSize="24"
-                SemanticProperties.Description="Search email subjects"
-                Text="&#xfb26;"
-                TextColor="White"
-                ToolTipProperties.Text="Search email subjects"
-                VerticalOptions="Center" />
             <Entry
                 x:Name="SearchEntry"
                 BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
@@ -45,10 +36,34 @@
                 Completed="OnSearchCompleted"
                 HeightRequest="40"
                 HorizontalOptions="Fill"
-                Placeholder="Search subject"
+                Placeholder="Search"
                 PlaceholderColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray200}}"
                 ReturnType="Search"
                 TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                VerticalOptions="Center" />
+            <Button
+                x:Name="FilterButton"
+                Grid.Column="4"
+                BackgroundColor="Transparent"
+                Clicked="OnFilterClicked"
+                FontFamily="FluentRegular"
+                FontSize="24"
+                SemanticProperties.Description="Show email search filters"
+                Text="&#xf408;"
+                TextColor="White"
+                ToolTipProperties.Text="Search filters"
+                VerticalOptions="Center" />
+            <Button
+                x:Name="SearchButton"
+                Grid.Column="5"
+                BackgroundColor="Transparent"
+                Clicked="OnSearchClicked"
+                FontFamily="FluentRegular"
+                FontSize="24"
+                SemanticProperties.Description="Search email"
+                Text="&#xfb26;"
+                TextColor="White"
+                ToolTipProperties.Text="Search email"
                 VerticalOptions="Center" />
         </Grid>
 
@@ -59,7 +74,7 @@
                 ItemsSource="{Binding Emails}"
                 SelectionMode="Single">
                 <CollectionView.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="models:Email">
                         <Grid
                             BackgroundColor="Transparent"
                             Padding="16,10"
@@ -147,5 +162,15 @@
                 </Button.Shadow>
             </Button>
         </Grid>
+
+        <views:InboxFilterPanel
+            x:Name="FilterPanel"
+            Grid.Row="1"
+            Margin="0,8,48,0"
+            HorizontalOptions="End"
+            IsVisible="False"
+            VerticalOptions="Start"
+            WidthRequest="300"
+            ZIndex="2" />
     </Grid>
 </ContentView>

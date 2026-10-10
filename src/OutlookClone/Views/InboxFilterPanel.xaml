@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="OutlookClone.Views.InboxFilterPanel"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    <ContentView.Resources>
+        <Style BasedOn="{StaticResource DefaultCheckBoxStyle}" TargetType="CheckBox">
+            <Setter Property="HeightRequest" Value="32" />
+            <Setter Property="WidthRequest" Value="28" />
+        </Style>
+    </ContentView.Resources>
+    <Border
+        Padding="14"
+        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+        Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}">
+        <VerticalStackLayout Spacing="0">
+            <Button
+                Padding="0"
+                BackgroundColor="Transparent"
+                Clicked="OnDoneClicked"
+                FontSize="18"
+                HeightRequest="32"
+                HorizontalOptions="Fill"
+                SemanticProperties.Description="Minimize search filters"
+                Text="&#x25B2;"
+                TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray200}}"
+                ToolTipProperties.Text="Minimize search filters" />
+            <Label
+                FontAttributes="Bold"
+                Text="Search filters"
+                TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+            <Grid
+                ColumnDefinitions="28,Auto,*"
+                ColumnSpacing="0"
+                RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                VerticalOptions="FillAndExpand">
+                <CheckBox x:Name="FromFilter" Grid.Row="0" />
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Margin="0"
+                    SemanticProperties.Description="From filter also searches CC and BCC"
+                    Text="From"
+                    TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                    VerticalOptions="Center" />
+                <CheckBox x:Name="ToFilter" Grid.Row="1" />
+                <Label Grid.Row="1" Grid.Column="1" Margin="0" Text="To" VerticalOptions="Center" />
+                <CheckBox x:Name="SubjectFilter" Grid.Row="2" IsChecked="True" />
+                <Label Grid.Row="2" Grid.Column="1" Margin="0" Text="Subject" VerticalOptions="Center" />
+                <CheckBox x:Name="MessageFilter" Grid.Row="3" />
+                <Label Grid.Row="3" Grid.Column="1" Margin="0" Text="Message" VerticalOptions="Center" />
+                <CheckBox x:Name="DeliveredBeforeFilter" Grid.Row="4" />
+                <Label Grid.Row="4" Grid.Column="1" Margin="0" Text="Delivered before" VerticalOptions="Center" />
+                <DatePicker
+                    x:Name="DeliveredBeforePicker"
+                    Grid.Row="4"
+                    Grid.Column="2"
+                    Format="yyyy-MM-dd"
+                    HorizontalOptions="Fill"
+                    TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                <CheckBox x:Name="DeliveredAfterFilter" Grid.Row="5" />
+                <Label Grid.Row="5" Grid.Column="1" Margin="0" Text="Delivered after" VerticalOptions="Center" />
+                <DatePicker
+                    x:Name="DeliveredAfterPicker"
+                    Grid.Row="5"
+                    Grid.Column="2"
+                    Format="yyyy-MM-dd"
+                    HorizontalOptions="Fill"
+                    TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+            </Grid>
+            <Label
+                FontSize="12"
+                Text="IMAP matches calendar days."
+                TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray200}}" />
+        </VerticalStackLayout>
+    </Border>
+</ContentView>
