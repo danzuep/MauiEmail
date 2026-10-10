@@ -3,7 +3,7 @@
     x:Class="OutlookClone.Views.ComposePage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:minted="https://schemas.mintedtexteditor.com/2026"
+    xmlns:rich="clr-namespace:RichEdit.Maui;assembly=RichEdit.Maui"
     xmlns:viewModels="clr-namespace:OutlookClone.ViewModels"
     x:DataType="viewModels:SenderViewModel"
     Title="New message">
@@ -44,12 +44,10 @@
             Grid.Row="3"
             Placeholder="Subject"
             Text="{Binding SubjectTextBox}" />
-        <minted:MintedEditorView
+        <rich:RichEditor
             x:Name="HtmlEditor"
             Grid.Row="4"
-            PlaceholderText="Write your message"
-            ShowToolbar="True"
-            UseSystemTheme="True"
+            Placeholder="Write your message"
             VerticalOptions="Fill" />
         <Label
             Grid.Row="5"

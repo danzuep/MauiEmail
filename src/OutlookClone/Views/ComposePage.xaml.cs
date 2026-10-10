@@ -1,4 +1,6 @@
 using OutlookClone.ViewModels;
+using RichEdit.Maui;
+using RtfPipe;
 
 namespace OutlookClone.Views;
 
@@ -10,7 +12,7 @@ public partial class ComposePage : ContentPage
         var viewModel = new SenderViewModel();
         viewModel.MailSent += OnMailSent;
         BindingContext = viewModel;
-        HtmlEditor.LoadHtml(viewModel.MessageTextBox);
+        HtmlEditor.Document = RichTextDocument.FromPlainText(viewModel.MessageTextBox);
     }
 
     private async void OnBackClicked(object? sender, EventArgs e)
@@ -28,7 +30,7 @@ public partial class ComposePage : ContentPage
         if (BindingContext is not SenderViewModel viewModel)
             return;
 
-        viewModel.MessageTextBox = HtmlEditor.GetHtml();
+        viewModel.MessageTextBox = Rtf.ToHtml(HtmlEditor.Document.RtfText);
         await viewModel.SendMailCommand.ExecuteAsync(null);
     }
 }
