@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MailKitSimplified.Sender.Services;
+using OutlookClone.Services;
 
 namespace OutlookClone.ViewModels
 {
@@ -50,7 +51,10 @@ namespace OutlookClone.ViewModels
             StatusMessage = string.Empty;
             try
             {
-                using var smtpSender = SmtpSender.Create("localhost");
+                var connectionSettings = await MailConnectionSettings.LoadAsync();
+                using var smtpSender = string.IsNullOrWhiteSpace(connectionSettings.Username) && string.IsNullOrWhiteSpace(connectionSettings.Password)
+                    ? SmtpSender.Create(connectionSettings.SmtpHost, connectionSettings.SmtpPort)
+                    : SmtpSender.Create(connectionSettings.SmtpHost, connectionSettings.SmtpPort, connectionSettings.Username, connectionSettings.Password);
                 await smtpSender.WriteEmail
                     .From(FromTextBox)
                     .To(ToTextBox)

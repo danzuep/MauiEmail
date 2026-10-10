@@ -3,6 +3,7 @@ using MailKit.Search;
 using MailKitSimplified.Receiver.Abstractions;
 using MailKitSimplified.Receiver.Services;
 using OutlookClone.Extensions;
+using OutlookClone.Services;
 
 namespace OutlookClone.Views;
 
@@ -56,7 +57,10 @@ public partial class InboxView : ContentView
         LoadMoreButton.IsEnabled = false;
         try
         {
-            using var receiver = ImapReceiver.Create("localhost");
+            var connectionSettings = await MailConnectionSettings.LoadAsync();
+            using var receiver = string.IsNullOrWhiteSpace(connectionSettings.Username) && string.IsNullOrWhiteSpace(connectionSettings.Password)
+                ? ImapReceiver.Create(connectionSettings.ImapHost, connectionSettings.ImapPort)
+                : ImapReceiver.Create(connectionSettings.ImapHost, connectionSettings.ImapPort, connectionSettings.Username, connectionSettings.Password);
             IMailReader mailReader = receiver.ReadMail;
             var searchQuery = CreateSearchQuery(
                 _activeSearchFields,

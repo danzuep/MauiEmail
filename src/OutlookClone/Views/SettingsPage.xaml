@@ -4,55 +4,76 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Title="Settings">
-    <VerticalStackLayout Padding="24" Spacing="24">
-        <Grid ColumnDefinitions="Auto,*">
-            <Button
-                Padding="8"
-                BackgroundColor="Transparent"
-                Clicked="OnBackClicked"
-                FontSize="22"
-                SemanticProperties.Description="Back to inbox"
-                Text="&#x2190;"
-                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}"
-                ToolTipProperties.Text="Back to inbox" />
-            <Label
-                Grid.Column="1"
-                FontAttributes="Bold"
-                FontSize="22"
-                HorizontalOptions="Center"
-                Text="Settings"
-                VerticalOptions="Center" />
-        </Grid>
-
-        <VerticalStackLayout Spacing="12">
-            <Label
-                FontAttributes="Bold"
-                FontSize="18"
-                Text="Appearance" />
-            <Grid
-                ColumnDefinitions="Auto,Auto,Auto"
-                ColumnSpacing="12"
-                HorizontalOptions="Center">
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="24">
+            <Grid ColumnDefinitions="Auto,*">
+                <Button
+                    Padding="8"
+                    BackgroundColor="Transparent"
+                    Clicked="OnBackClicked"
+                    FontSize="22"
+                    SemanticProperties.Description="Back to inbox"
+                    Text="&#x2190;"
+                    TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}"
+                    ToolTipProperties.Text="Back to inbox" />
                 <Label
-                    FontSize="24"
-                    SemanticProperties.Description="Light theme"
-                    Text="&#x263C;"
-                    TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}"
-                    VerticalOptions="Center" />
-                <Switch
-                    x:Name="ThemeSwitch"
                     Grid.Column="1"
-                    SemanticProperties.Description="Switch between light and dark themes"
-                    Toggled="OnThemeToggled"
-                    VerticalOptions="Center" />
-                <Label
-                    Grid.Column="2"
-                    FontSize="24"
-                    SemanticProperties.Description="Dark theme"
-                    Text="&#x263E;"
-                    TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource White}}"
+                    FontAttributes="Bold"
+                    FontSize="22"
+                    HorizontalOptions="Center"
+                    Text="Settings"
                     VerticalOptions="Center" />
             </Grid>
+
+            <VerticalStackLayout Spacing="12">
+                <Label FontAttributes="Bold" FontSize="18" Text="Appearance" />
+                <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="12" HorizontalOptions="Center">
+                    <Label
+                        FontSize="24"
+                        SemanticProperties.Description="Light theme"
+                        Text="&#x263C;"
+                        TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}"
+                        VerticalOptions="Center" />
+                    <Switch
+                        x:Name="ThemeSwitch"
+                        Grid.Column="1"
+                        SemanticProperties.Description="Switch between light and dark themes"
+                        Toggled="OnThemeToggled"
+                        VerticalOptions="Center" />
+                    <Label
+                        Grid.Column="2"
+                        FontSize="24"
+                        SemanticProperties.Description="Dark theme"
+                        Text="&#x263E;"
+                        TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource White}}"
+                        VerticalOptions="Center" />
+                </Grid>
+            </VerticalStackLayout>
+            <VerticalStackLayout Spacing="12">
+                <Label FontAttributes="Bold" FontSize="18" Text="Mail server" />
+                <Grid ColumnDefinitions="*,100" ColumnSpacing="12" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                    <Label Grid.Row="0" Text="IMAP host" VerticalOptions="Center" />
+                    <Entry x:Name="ImapHostEntry" Grid.Row="0" Grid.Column="1" Placeholder="imap.example.com" />
+                    <Label Grid.Row="1" Text="IMAP port" VerticalOptions="Center" />
+                    <Entry x:Name="ImapPortEntry" Grid.Row="1" Grid.Column="1" Keyboard="Numeric" Placeholder="143" />
+                    <Label Grid.Row="2" Text="SMTP host" VerticalOptions="Center" />
+                    <Entry x:Name="SmtpHostEntry" Grid.Row="2" Grid.Column="1" Placeholder="smtp.example.com" />
+                    <Label Grid.Row="3" Text="SMTP port" VerticalOptions="Center" />
+                    <Entry x:Name="SmtpPortEntry" Grid.Row="3" Grid.Column="1" Keyboard="Numeric" Placeholder="25" />
+                    <Label Grid.Row="4" Text="Username" VerticalOptions="Center" />
+                    <Entry x:Name="UsernameEntry" Grid.Row="4" Grid.Column="1" Placeholder="Optional" />
+                    <Label Grid.Row="5" Text="Password" VerticalOptions="Center" />
+                    <Entry x:Name="PasswordEntry" Grid.Row="5" Grid.Column="1" IsPassword="True" Placeholder="Optional" />
+                </Grid>
+                <Label
+                    x:Name="ConnectionStatusLabel"
+                    FontSize="12"
+                    TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray200}}" />
+                <Button
+                    Clicked="OnSaveConnectionClicked"
+                    HorizontalOptions="End"
+                    Text="Save connection" />
+            </VerticalStackLayout>
         </VerticalStackLayout>
-    </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>
