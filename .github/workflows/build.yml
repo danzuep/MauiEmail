@@ -2,6 +2,10 @@ name: Build
 run-name: Build Android for pull request
 
 on:
+  workflow_dispatch:
+  push:
+    branches:
+      - build
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -18,15 +22,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET 10
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.x
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('src/OutlookClone/OutlookClone.csproj') }}
