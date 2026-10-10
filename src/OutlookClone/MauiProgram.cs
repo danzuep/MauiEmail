@@ -1,4 +1,4 @@
-﻿using SkiaSharp.Views.Maui.Controls.Hosting;
+﻿using Microsoft.Extensions.Logging;
 
 namespace OutlookClone
 {
@@ -15,8 +15,11 @@ namespace OutlookClone
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                     fonts.AddFont("FluentSystemIcons-Filled.ttf", "FluentFilled");
                     fonts.AddFont("FluentSystemIcons-Regular.ttf", "FluentRegular");
-                })
-                .UseSkiaSharp();
+                });
+
+#if DEBUG
+            builder.Logging.AddDebug();
+#endif
 
             return builder.Build();
         }

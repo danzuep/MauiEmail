@@ -4,10 +4,11 @@
              xmlns:local="clr-namespace:OutlookClone"
              x:Class="OutlookClone.App">
     <Application.Resources>
-        <ResourceDictionary Source="Resources/Styles.xaml">
-            <Color x:Key="Primary">#0878d3</Color>
-            <Color x:Key="Secondary">#f1edec</Color>
-            <Color x:Key="Tertiary">#717171</Color>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
+                <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="OutlookClone.Views.ComposePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="New message">
+    <Grid
+        Padding="20"
+        RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto"
+        RowSpacing="12">
+        <Grid ColumnDefinitions="Auto,*">
+            <Button
+                Padding="8"
+                BackgroundColor="Transparent"
+                Clicked="OnBackClicked"
+                FontSize="22"
+                SemanticProperties.Description="Back to inbox"
+                Text="&#x2190;"
+                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}"
+                ToolTipProperties.Text="Back to inbox" />
+            <Label
+                Grid.Column="1"
+                FontAttributes="Bold"
+                FontSize="20"
+                HorizontalOptions="Center"
+                Text="New message"
+                VerticalOptions="Center" />
+        </Grid>
+
+        <Entry
+            Grid.Row="1"
+            Keyboard="Email"
+            Placeholder="From"
+            Text="{Binding FromTextBox}" />
+        <Entry
+            Grid.Row="2"
+            Keyboard="Email"
+            Placeholder="To"
+            Text="{Binding ToTextBox}" />
+        <Entry
+            Grid.Row="3"
+            Placeholder="Subject"
+            Text="{Binding SubjectTextBox}" />
+        <Editor
+            Grid.Row="4"
+            AutoSize="TextChanges"
+            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+            Placeholder="Write your message"
+            TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+            Text="{Binding MessageTextBox}" />
+        <Label
+            Grid.Row="5"
+            FontSize="12"
+            Text="{Binding StatusMessage}"
+            TextColor="{StaticResource Tertiary}"
+            VerticalOptions="Center" />
+        <Button
+            Grid.Row="6"
+            BackgroundColor="{StaticResource Primary}"
+            Command="{Binding SendMailCommand}"
+            FontSize="24"
+            SemanticProperties.Description="Send email"
+            Text="&#x1F4E8;"
+            TextColor="White"
+            ToolTipProperties.Text="Send email" />
+    </Grid>
+</ContentPage>

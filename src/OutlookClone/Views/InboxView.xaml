@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="OutlookClone.Views.InboxView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    <Grid RowDefinitions="56,*">
+        <Grid
+            Padding="20,0"
+            BackgroundColor="{StaticResource Primary}"
+            ColumnDefinitions="Auto,Auto,*,180,Auto">
+            <Label
+                FontAttributes="Bold"
+                FontSize="20"
+                Text="Inbox"
+                TextColor="White"
+                VerticalOptions="Center" />
+            <Button
+                x:Name="ThemeToggleButton"
+                Grid.Column="1"
+                Padding="8"
+                BackgroundColor="Transparent"
+                Clicked="OnThemeToggleClicked"
+                FontSize="20"
+                HeightRequest="40"
+                SemanticProperties.Description="Toggle light and dark theme"
+                TextColor="White"
+                ToolTipProperties.Text="Toggle light and dark theme"
+                WidthRequest="40" />
+            <Button
+                x:Name="SearchButton"
+                Grid.Column="4"
+                BackgroundColor="Transparent"
+                Clicked="OnSearchClicked"
+                FontFamily="FluentRegular"
+                FontSize="24"
+                SemanticProperties.Description="Search email subjects"
+                Text="&#xfb26;"
+                TextColor="White"
+                ToolTipProperties.Text="Search email subjects"
+                VerticalOptions="Center" />
+            <Entry
+                x:Name="SearchEntry"
+                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                Grid.Column="3"
+                Completed="OnSearchCompleted"
+                HeightRequest="40"
+                HorizontalOptions="Fill"
+                Placeholder="Search subject"
+                PlaceholderColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray200}}"
+                ReturnType="Search"
+                TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                VerticalOptions="Center" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <CollectionView
+                x:Name="MessageCollection"
+                Margin="0,8"
+                ItemsSource="{Binding Emails}"
+                SelectionMode="Single">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid
+                            BackgroundColor="Transparent"
+                            Padding="16,10"
+                            ColumnDefinitions="*,Auto"
+                            RowDefinitions="Auto,Auto,Auto">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup Name="CommonStates">
+                                    <VisualState Name="Normal" />
+                                    <VisualState Name="Selected">
+                                        <VisualState.Setters>
+                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    NumberOfTapsRequired="2"
+                                    Tapped="OnMessageDoubleTapped" />
+                            </Grid.GestureRecognizers>
+                            <Label
+                                FontAttributes="Bold"
+                                Text="{Binding From}"
+                                TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                            <Label
+                                Grid.Column="1"
+                                FontSize="12"
+                                Text="{Binding Date}"
+                                TextColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource Gray200}}" />
+                            <Label
+                                Grid.Row="1"
+                                Grid.ColumnSpan="2"
+                                Text="{Binding Subject}"
+                                TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                            <Label
+                                Grid.Row="2"
+                                Grid.ColumnSpan="2"
+                                LineBreakMode="TailTruncation"
+                                Text="{Binding BodyPreview}"
+                                TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray200}}" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <ActivityIndicator
+                x:Name="LoadingIndicator"
+                HorizontalOptions="Center"
+                IsVisible="False"
+                VerticalOptions="Center"
+                Color="{StaticResource Primary}" />
+
+            <Button
+                x:Name="LoadMoreButton"
+                Margin="20"
+                Padding="0"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}"
+                CornerRadius="24"
+                FontSize="24"
+                HeightRequest="48"
+                HorizontalOptions="Center"
+                SemanticProperties.Description="Load the next 10 emails"
+                Text="&#x2193;"
+                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}"
+                VerticalOptions="End"
+                WidthRequest="48"
+                Clicked="OnLoadMoreClicked" />
+
+            <Button
+                Margin="20"
+                Padding="0"
+                BackgroundColor="{StaticResource Primary}"
+                CornerRadius="30"
+                FontSize="30"
+                HeightRequest="60"
+                HorizontalOptions="End"
+                SemanticProperties.Description="Compose email"
+                Text="+"
+                TextColor="White"
+                VerticalOptions="End"
+                WidthRequest="60"
+                Clicked="OnComposeClicked">
+                <Button.Shadow>
+                    <Shadow Brush="Black" Opacity="0.35" Radius="10" Offset="3,4" />
+                </Button.Shadow>
+            </Button>
+        </Grid>
+    </Grid>
+</ContentView>
