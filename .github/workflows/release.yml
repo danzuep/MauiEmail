@@ -1,5 +1,5 @@
 name: Release
-run-name: ${{ inputs.mode || 'release' }} MauiEmail
+run-name: MauiEmail ${{ inputs.mode || github.event_name }}
 
 on:
   workflow_dispatch:
@@ -9,16 +9,25 @@ on:
         required: false
         type: string
       mode:
-        description: 'Release publishes a tag and GitHub Release; pipeline-test builds without publishing'
+        description: 'Release publishes assets; pipeline-test publishes workflow artifacts; build-only just compiles'
         required: true
         type: choice
         options:
           - release
           - pipeline-test
+          - build-only
         default: release
+      publish_unsigned_android:
+        description: 'Include an unsigned Android APK in the GitHub Release when signing secrets are missing. Unsigned APKs cannot be installed until signed.'
+        required: true
+        type: boolean
+        default: false
   push:
     branches:
       - release
+      - build
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 concurrency:
   group: release-${{ github.ref }}
@@ -34,13 +43,23 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       mode: ${{ steps.version.outputs.mode }}
+      android_signing_configured: ${{ steps.version.outputs.android_signing_configured }}
+      android_artifact_available: ${{ steps.version.outputs.android_artifact_available }}
+      android_artifact_suffix: ${{ steps.version.outputs.android_artifact_suffix }}
     steps:
       - name: Validate and set version
         id: version
         shell: bash
         env:
           INPUT_VERSION: ${{ inputs.version }}
-          MODE: ${{ inputs.mode || 'release' }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_PUBLISH_UNSIGNED_ANDROID: ${{ inputs.publish_unsigned_android }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           version="$INPUT_VERSION"
           if [[ -z "$version" ]]; then
@@ -52,11 +71,41 @@ jobs:
             exit 1
           fi
 
+          if [[ "$EVENT_NAME" == "pull_request" || ( "$EVENT_NAME" == "push" && "$REF_NAME" != "release" ) ]]; then
+            mode=build-only
+          elif [[ -n "$INPUT_MODE" ]]; then
+            mode="$INPUT_MODE"
+          else
+            mode=release
+          fi
+
+          if [[ -n "$ANDROID_KEYSTORE_BASE64" && -n "$ANDROID_KEYSTORE_PASSWORD" && -n "$ANDROID_KEY_ALIAS" && -n "$ANDROID_KEY_PASSWORD" ]]; then
+            android_signing_configured=true
+          else
+            android_signing_configured=false
+          fi
+
+          if [[ "$mode" == "pipeline-test" || "$android_signing_configured" == "true" || "$INPUT_PUBLISH_UNSIGNED_ANDROID" == "true" ]]; then
+            android_artifact_available=true
+          else
+            android_artifact_available=false
+          fi
+
+          if [[ "$mode" == "release" && "$android_signing_configured" == "true" ]]; then
+            android_artifact_suffix=signed
+          else
+            android_artifact_suffix=unsigned
+          fi
+
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
-          echo "### MauiEmail release" >> "$GITHUB_STEP_SUMMARY"
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "android_signing_configured=$android_signing_configured" >> "$GITHUB_OUTPUT"
+          echo "android_artifact_available=$android_artifact_available" >> "$GITHUB_OUTPUT"
+          echo "android_artifact_suffix=$android_artifact_suffix" >> "$GITHUB_OUTPUT"
+          echo "### MauiEmail workflow" >> "$GITHUB_STEP_SUMMARY"
           echo "Version: $version" >> "$GITHUB_STEP_SUMMARY"
-          echo "Mode: $MODE" >> "$GITHUB_STEP_SUMMARY"
+          echo "Mode: $mode" >> "$GITHUB_STEP_SUMMARY"
+          echo "Android signing configured: $android_signing_configured" >> "$GITHUB_STEP_SUMMARY"
 
   build:
     name: Build ${{ matrix.platform }} app
@@ -80,6 +129,11 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v7
 
+      - name: Set writable .NET installation directory
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: echo "DOTNET_INSTALL_DIR=$HOME/.dotnet" >> "$GITHUB_ENV"
+
       - name: Set up .NET 10
         uses: actions/setup-dotnet@v6
         with:
@@ -101,15 +155,20 @@ jobs:
         uses: actions/cache@v6
         with:
           path: |
-            ${{ runner.os == 'Windows' && 'C:\Program Files\dotnet\packs' || '/usr/share/dotnet/packs' }}
-            ${{ runner.os == 'Windows' && 'C:\Program Files\dotnet\metadata\workloads' || '/usr/share/dotnet/metadata/workloads' }}
+            ${{ runner.os == 'Windows' && 'C:\Program Files\dotnet\packs' || '~/.dotnet/packs' }}
+            ${{ runner.os == 'Windows' && 'C:\Program Files\dotnet\sdk-manifests' || '~/.dotnet/sdk-manifests' }}
+            ${{ runner.os == 'Windows' && 'C:\Program Files\dotnet\metadata\workloads' || '~/.dotnet/metadata/workloads' }}
           key: ${{ runner.os }}-dotnet-${{ steps.sdk.outputs.version }}-${{ matrix.workload }}-workloads
 
       - name: Install .NET MAUI workload
         run: dotnet workload install ${{ matrix.workload }}
 
+      - name: Build Windows app
+        if: ${{ matrix.platform == 'windows' && (github.event_name == 'pull_request' || needs.version.outputs.mode == 'build-only') }}
+        run: dotnet build src/OutlookClone/OutlookClone.csproj -c Release -f ${{ matrix.target_framework }} --nologo
+
       - name: Publish Windows app
-        if: ${{ matrix.platform == 'windows' }}
+        if: ${{ matrix.platform == 'windows' && github.event_name != 'pull_request' && needs.version.outputs.mode != 'build-only' }}
         shell: pwsh
         env:
           VERSION: ${{ needs.version.outputs.version }}
@@ -124,26 +183,31 @@ jobs:
           -o publish
 
       - name: Create Windows release archive
-        if: ${{ matrix.platform == 'windows' }}
+        if: ${{ matrix.platform == 'windows' && github.event_name != 'pull_request' && needs.version.outputs.mode != 'build-only' }}
         shell: pwsh
         env:
           VERSION: ${{ needs.version.outputs.version }}
         run: Compress-Archive -Path publish/* -DestinationPath "MauiEmail-$env:VERSION-win-x64.zip"
 
       - name: Upload Windows artifact
-        if: ${{ matrix.platform == 'windows' }}
+        if: ${{ matrix.platform == 'windows' && github.event_name != 'pull_request' && needs.version.outputs.mode != 'build-only' }}
         uses: actions/upload-artifact@v7
         with:
           name: MauiEmail-windows
           path: MauiEmail-${{ needs.version.outputs.version }}-win-x64.zip
           if-no-files-found: error
 
+      - name: Build Android app
+        if: ${{ matrix.platform == 'android' && (github.event_name == 'pull_request' || needs.version.outputs.mode == 'build-only') }}
+        run: dotnet build src/OutlookClone/OutlookClone.csproj -c Release -f ${{ matrix.target_framework }} --nologo
+
       - name: Publish Android APK
-        if: ${{ matrix.platform == 'android' }}
+        if: ${{ matrix.platform == 'android' && github.event_name != 'pull_request' && needs.version.outputs.mode != 'build-only' && needs.version.outputs.android_artifact_available == 'true' }}
         shell: bash
         env:
           MODE: ${{ needs.version.outputs.mode }}
           VERSION: ${{ needs.version.outputs.version }}
+          ANDROID_SIGNING_CONFIGURED: ${{ needs.version.outputs.android_signing_configured }}
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -153,7 +217,6 @@ jobs:
             src/OutlookClone/OutlookClone.csproj
             -c Release
             -f net10.0-android
-            -p:AndroidPackageFormat=apk
             "-p:Version=$VERSION"
             "-p:ApplicationDisplayVersion=$VERSION"
             "-p:ApplicationVersion=$GITHUB_RUN_NUMBER"
@@ -161,34 +224,42 @@ jobs:
           )
 
           if [[ "$MODE" == "release" ]]; then
-            if [[ -z "$ANDROID_KEYSTORE_BASE64" || -z "$ANDROID_KEYSTORE_PASSWORD" || -z "$ANDROID_KEY_ALIAS" || -z "$ANDROID_KEY_PASSWORD" ]]; then
-              echo 'Configure ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD repository secrets.' >&2
-              exit 1
+            if [[ "$ANDROID_SIGNING_CONFIGURED" == "true" ]]; then
+              keystore_path="$RUNNER_TEMP/mauemail-release.keystore"
+              printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+              dotnet publish "${common_args[@]}" \
+                -p:AndroidKeyStore=true \
+                "-p:AndroidSigningKeyStore=$keystore_path" \
+                "-p:AndroidSigningKeyAlias=$ANDROID_KEY_ALIAS" \
+                "-p:AndroidSigningStorePass=$ANDROID_KEYSTORE_PASSWORD" \
+                "-p:AndroidSigningKeyPass=$ANDROID_KEY_PASSWORD"
+            else
+              echo '::warning::Publishing an unsigned Android APK because signing secrets are missing.'
+              dotnet publish "${common_args[@]}" -p:AndroidKeyStore=false
             fi
-
-            keystore_path="$RUNNER_TEMP/mauemail-release.keystore"
-            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
-            dotnet publish "${common_args[@]}" \
-              -p:AndroidKeyStore=true \
-              "-p:AndroidSigningKeyStore=$keystore_path" \
-              "-p:AndroidSigningKeyAlias=$ANDROID_KEY_ALIAS" \
-              "-p:AndroidSigningStorePass=$ANDROID_KEYSTORE_PASSWORD" \
-              "-p:AndroidSigningKeyPass=$ANDROID_KEY_PASSWORD"
           else
-            dotnet publish "${common_args[@]}"
+            echo '::warning::Pipeline-test APK is unsigned.'
+            dotnet publish "${common_args[@]}" -p:AndroidKeyStore=false
           fi
 
+          apk_file=$(find publish -maxdepth 1 -type f -name '*.apk' -print -quit)
+          if [[ -z "$apk_file" ]]; then
+            echo 'No APK was produced.' >&2
+            exit 1
+          fi
+          cp "$apk_file" "MauiEmail-$VERSION-android-${{ needs.version.outputs.android_artifact_suffix }}.apk"
+
       - name: Upload Android artifact
-        if: ${{ matrix.platform == 'android' }}
+        if: ${{ matrix.platform == 'android' && github.event_name != 'pull_request' && needs.version.outputs.mode != 'build-only' && needs.version.outputs.android_artifact_available == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: MauiEmail-android
-          path: publish/*.apk
+          path: MauiEmail-${{ needs.version.outputs.version }}-android-${{ needs.version.outputs.android_artifact_suffix }}.apk
           if-no-files-found: error
 
   publish_release:
     name: Create tag and GitHub Release
-    if: ${{ needs.version.outputs.mode == 'release' }}
+    if: ${{ github.event_name != 'pull_request' && needs.version.outputs.mode == 'release' }}
     needs: [version, build]
     runs-on: ubuntu-latest
     permissions:
@@ -206,6 +277,7 @@ jobs:
           path: release-assets
 
       - name: Download Android artifact
+        if: ${{ needs.version.outputs.android_artifact_available == 'true' }}
         uses: actions/download-artifact@v8
         with:
           name: MauiEmail-android

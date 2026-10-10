@@ -34,7 +34,12 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true' or '$(Configuration)' == 'Release'">
-		<TargetFrameworks>$(TargetFrameworks);$(NetVersion)-android</TargetFrameworks>
+		<TargetFrameworks Condition="'$(TargetFrameworks)' == ''">$(NetVersion)-android</TargetFrameworks>
+		<TargetFrameworks Condition="'$(TargetFrameworks)' != ''">$(TargetFrameworks);$(NetVersion)-android</TargetFrameworks>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="$(TargetFramework.Contains('-android')) and '$(Configuration)' == 'Release'">
+		<AndroidPackageFormats>apk</AndroidPackageFormats>
 	</PropertyGroup>
 
 	<ItemGroup>
