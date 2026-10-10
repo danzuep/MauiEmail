@@ -1,0 +1,39 @@
+name: Build
+run-name: Build Android for pull request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: build-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build_android:
+    name: Build Android app
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('src/OutlookClone/OutlookClone.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Install .NET MAUI Android workload
+        run: dotnet workload install maui-android
+
+      - name: Build Android app
+        run: dotnet build src/OutlookClone/OutlookClone.csproj -c Release -f net10.0-android --nologo

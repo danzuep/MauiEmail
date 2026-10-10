@@ -1,0 +1,232 @@
+name: Release
+run-name: ${{ inputs.mode || 'release' }} MauiEmail
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Semantic version; leave blank to use 1.0.<run number>'
+        required: false
+        type: string
+      mode:
+        description: 'Release publishes a tag and GitHub Release; pipeline-test builds without publishing'
+        required: true
+        type: choice
+        options:
+          - release
+          - pipeline-test
+        default: release
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    name: Determine release version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      mode: ${{ steps.version.outputs.mode }}
+    steps:
+      - name: Validate and set version
+        id: version
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          version="$INPUT_VERSION"
+          if [[ -z "$version" ]]; then
+            version="1.0.${GITHUB_RUN_NUMBER}"
+          fi
+
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid semantic version: $version" >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+
+  build_windows:
+    name: Build Windows app
+    needs: [version]
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('src/OutlookClone/OutlookClone.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Install .NET MAUI workload
+        run: dotnet workload install maui
+
+      - name: Publish Windows app
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: >-
+          dotnet publish src/OutlookClone/OutlookClone.csproj
+          -c Release
+          -f net10.0-windows10.0.19041.0
+          -p:WindowsPackageType=None
+          -p:WindowsAppSDKSelfContained=true
+          -p:Version=$env:VERSION
+          -p:ApplicationDisplayVersion=$env:VERSION
+          -o publish
+
+      - name: Create Windows release archive
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: Compress-Archive -Path publish/* -DestinationPath "MauiEmail-$env:VERSION-win-x64.zip"
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MauiEmail-windows
+          path: MauiEmail-${{ needs.version.outputs.version }}-win-x64.zip
+          if-no-files-found: error
+
+  build_android:
+    name: Build Android app
+    needs: [version]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('src/OutlookClone/OutlookClone.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Install .NET MAUI Android workload
+        run: dotnet workload install maui-android
+
+      - name: Publish Android APK
+        shell: bash
+        env:
+          MODE: ${{ needs.version.outputs.mode }}
+          VERSION: ${{ needs.version.outputs.version }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          common_args=(
+            src/OutlookClone/OutlookClone.csproj
+            -c Release
+            -f net10.0-android
+            -p:AndroidPackageFormat=apk
+            "-p:Version=$VERSION"
+            "-p:ApplicationDisplayVersion=$VERSION"
+            "-p:ApplicationVersion=$GITHUB_RUN_NUMBER"
+            -o publish
+          )
+
+          if [[ "$MODE" == "release" ]]; then
+            if [[ -z "$ANDROID_KEYSTORE_BASE64" || -z "$ANDROID_KEYSTORE_PASSWORD" || -z "$ANDROID_KEY_ALIAS" || -z "$ANDROID_KEY_PASSWORD" ]]; then
+              echo 'Configure ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD repository secrets.' >&2
+              exit 1
+            fi
+
+            keystore_path="$RUNNER_TEMP/mauemail-release.keystore"
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+            dotnet publish "${common_args[@]}" \
+              -p:AndroidKeyStore=true \
+              "-p:AndroidSigningKeyStore=$keystore_path" \
+              "-p:AndroidSigningKeyAlias=$ANDROID_KEY_ALIAS" \
+              "-p:AndroidSigningStorePass=$ANDROID_KEYSTORE_PASSWORD" \
+              "-p:AndroidSigningKeyPass=$ANDROID_KEY_PASSWORD"
+          else
+            dotnet publish "${common_args[@]}"
+          fi
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MauiEmail-android
+          path: publish/*.apk
+          if-no-files-found: error
+
+  publish_release:
+    name: Create tag and GitHub Release
+    if: ${{ needs.version.outputs.mode == 'release' }}
+    needs: [version, build_windows, build_android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout complete history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: MauiEmail-windows
+          path: release-assets
+
+      - name: Download Android artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: MauiEmail-android
+          path: release-assets
+
+      - name: Generate commit history and create annotated tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          tag="v$VERSION"
+          if git rev-parse --quiet --verify "refs/tags/$tag" >/dev/null; then
+            echo "Tag $tag already exists." >&2
+            exit 1
+          fi
+
+          previous_tag=$(git describe --tags --abbrev=0 "$TARGET_SHA" 2>/dev/null || true)
+          printf '# MauiEmail %s\n\n## Changes\n\n' "$tag" > release-notes.md
+          if [[ -n "$previous_tag" ]]; then
+            git log "$previous_tag..$TARGET_SHA" --pretty=format:'- %h %s%n' >> release-notes.md
+          else
+            git log "$TARGET_SHA" --pretty=format:'- %h %s%n' >> release-notes.md
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag --annotate "$tag" "$TARGET_SHA" --file release-notes.md
+          git push origin "$tag"
+
+          gh release create "$tag" release-assets/* \
+            --title "MauiEmail $tag" \
+            --notes-file release-notes.md \
+            --verify-tag
