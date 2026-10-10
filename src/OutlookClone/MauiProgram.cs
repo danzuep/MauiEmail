@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using MintedTextEditor.Maui;
 
 namespace OutlookClone
 {
@@ -9,6 +10,7 @@ namespace OutlookClone
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMintedTextEditor()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
