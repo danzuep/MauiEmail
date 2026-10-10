@@ -40,7 +40,7 @@ jobs:
         shell: bash
         env:
           INPUT_VERSION: ${{ inputs.version }}
-          MODE: ${{ inputs.mode }}
+          MODE: ${{ inputs.mode || 'release' }}
         run: |
           version="$INPUT_VERSION"
           if [[ -z "$version" ]]; then
@@ -54,11 +54,26 @@ jobs:
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "### MauiEmail release" >> "$GITHUB_STEP_SUMMARY"
+          echo "Version: $version" >> "$GITHUB_STEP_SUMMARY"
+          echo "Mode: $MODE" >> "$GITHUB_STEP_SUMMARY"
 
-  build_windows:
-    name: Build Windows app
+  build:
+    name: Build ${{ matrix.platform }} app
     needs: [version]
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            runner: windows-latest
+            workload: maui
+            target_framework: net10.0-windows10.0.19041.0
+          - platform: android
+            runner: ubuntu-latest
+            workload: maui-android
+            target_framework: net10.0-android
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
     steps:
@@ -70,17 +85,31 @@ jobs:
         with:
           dotnet-version: 10.x
 
+      - name: Get .NET SDK version
+        id: sdk
+        shell: bash
+        run: echo "version=$(dotnet --version)" >> "$GITHUB_OUTPUT"
+
       - name: Cache NuGet packages
         uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('src/OutlookClone/OutlookClone.csproj') }}
-          restore-keys: ${{ runner.os }}-nuget-
+          key: ${{ runner.os }}-dotnet-${{ steps.sdk.outputs.version }}-nuget-${{ hashFiles('src/OutlookClone/OutlookClone.csproj') }}
+          restore-keys: ${{ runner.os }}-dotnet-${{ steps.sdk.outputs.version }}-nuget-
+
+      - name: Cache .NET workload packs
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ runner.os == 'Windows' && 'C:\Program Files\dotnet\packs' || '/usr/share/dotnet/packs' }}
+            ${{ runner.os == 'Windows' && 'C:\Program Files\dotnet\metadata\workloads' || '/usr/share/dotnet/metadata/workloads' }}
+          key: ${{ runner.os }}-dotnet-${{ steps.sdk.outputs.version }}-${{ matrix.workload }}-workloads
 
       - name: Install .NET MAUI workload
-        run: dotnet workload install maui
+        run: dotnet workload install ${{ matrix.workload }}
 
       - name: Publish Windows app
+        if: ${{ matrix.platform == 'windows' }}
         shell: pwsh
         env:
           VERSION: ${{ needs.version.outputs.version }}
@@ -95,44 +124,22 @@ jobs:
           -o publish
 
       - name: Create Windows release archive
+        if: ${{ matrix.platform == 'windows' }}
         shell: pwsh
         env:
           VERSION: ${{ needs.version.outputs.version }}
         run: Compress-Archive -Path publish/* -DestinationPath "MauiEmail-$env:VERSION-win-x64.zip"
 
       - name: Upload Windows artifact
+        if: ${{ matrix.platform == 'windows' }}
         uses: actions/upload-artifact@v7
         with:
           name: MauiEmail-windows
           path: MauiEmail-${{ needs.version.outputs.version }}-win-x64.zip
           if-no-files-found: error
 
-  build_android:
-    name: Build Android app
-    needs: [version]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v7
-
-      - name: Set up .NET 10
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 10.x
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v6
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('src/OutlookClone/OutlookClone.csproj') }}
-          restore-keys: ${{ runner.os }}-nuget-
-
-      - name: Install .NET MAUI Android workload
-        run: dotnet workload install maui-android
-
       - name: Publish Android APK
+        if: ${{ matrix.platform == 'android' }}
         shell: bash
         env:
           MODE: ${{ needs.version.outputs.mode }}
@@ -172,6 +179,7 @@ jobs:
           fi
 
       - name: Upload Android artifact
+        if: ${{ matrix.platform == 'android' }}
         uses: actions/upload-artifact@v7
         with:
           name: MauiEmail-android
@@ -181,7 +189,7 @@ jobs:
   publish_release:
     name: Create tag and GitHub Release
     if: ${{ needs.version.outputs.mode == 'release' }}
-    needs: [version, build_windows, build_android]
+    needs: [version, build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -217,7 +225,7 @@ jobs:
           fi
 
           previous_tag=$(git describe --tags --abbrev=0 "$TARGET_SHA" 2>/dev/null || true)
-          printf '# MauiEmail %s\n\n## Changes\n\n' "$tag" > release-notes.md
+          printf '# MauiEmail %s\n\nVersion: %s\n\n## Changes\n\n' "$tag" "$VERSION" > release-notes.md
           if [[ -n "$previous_tag" ]]; then
             git log "$previous_tag..$TARGET_SHA" --pretty=format:'- %h %s%n' >> release-notes.md
           else
