@@ -3,6 +3,7 @@
     x:Class="OutlookClone.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:fonts="clr-namespace:OutlookClone.Resources.Fonts"
     Title="Settings">
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="24">
@@ -13,7 +14,7 @@
                     Clicked="OnBackClicked"
                     FontSize="22"
                     SemanticProperties.Description="Back to inbox"
-                    Text="&#x2190;"
+                    ImageSource="{StaticResource FontIconBack}"
                     TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}"
                     ToolTipProperties.Text="Back to inbox" />
                 <Label
@@ -49,6 +50,7 @@
                         VerticalOptions="Center" />
                 </Grid>
             </VerticalStackLayout>
+
             <VerticalStackLayout Spacing="12">
                 <Label FontAttributes="Bold" FontSize="18" Text="Mail server" />
                 <Picker
@@ -60,6 +62,9 @@
                         <x:String>Localhost</x:String>
                         <x:String>Gmail</x:String>
                         <x:String>Outlook</x:String>
+                        <x:String>Yahoo</x:String>
+                        <x:String>iCloud</x:String>
+                        <x:String>Proton</x:String>
                     </Picker.Items>
                 </Picker>
                 <Label
@@ -68,20 +73,20 @@
                     Text="Read-only local sample inbox. Sending is disabled."
                     TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray200}}" />
                 <VerticalStackLayout x:Name="MailServerFields" Spacing="12">
-                <Grid ColumnDefinitions="*,120" ColumnSpacing="12" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
-                    <Label Grid.Row="0" Text="IMAP host" VerticalOptions="Center" />
-                    <Entry x:Name="ImapHostEntry" Grid.Row="0" Grid.Column="1" Placeholder="imap.example.com" />
-                    <Label Grid.Row="1" Text="IMAP port" VerticalOptions="Center" />
-                    <Entry x:Name="ImapPortEntry" Grid.Row="1" Grid.Column="1" Keyboard="Numeric" Placeholder="143" />
-                    <Label Grid.Row="2" Text="SMTP host" VerticalOptions="Center" />
-                    <Entry x:Name="SmtpHostEntry" Grid.Row="2" Grid.Column="1" Placeholder="smtp.example.com" />
-                    <Label Grid.Row="3" Text="SMTP port" VerticalOptions="Center" />
-                    <Entry x:Name="SmtpPortEntry" Grid.Row="3" Grid.Column="1" Keyboard="Numeric" Placeholder="25" />
-                    <Label Grid.Row="4" Text="Username" VerticalOptions="Center" />
-                    <Entry x:Name="UsernameEntry" Grid.Row="4" Grid.Column="1" Placeholder="Optional" />
-                    <Label Grid.Row="5" Text="Password" VerticalOptions="Center" />
-                    <Entry x:Name="PasswordEntry" Grid.Row="5" Grid.Column="1" IsPassword="True" Placeholder="Optional" />
-                </Grid>
+                    <Grid ColumnDefinitions="*,120" ColumnSpacing="12" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                        <Label Grid.Row="0" Text="IMAP host" VerticalOptions="Center" />
+                        <Entry x:Name="ImapHostEntry" Grid.Row="0" Grid.Column="1" Placeholder="imap.example.com" />
+                        <Label Grid.Row="1" Text="IMAP port" VerticalOptions="Center" />
+                        <Entry x:Name="ImapPortEntry" Grid.Row="1" Grid.Column="1" Keyboard="Numeric" Placeholder="143" />
+                        <Label Grid.Row="2" Text="SMTP host" VerticalOptions="Center" />
+                        <Entry x:Name="SmtpHostEntry" Grid.Row="2" Grid.Column="1" Placeholder="smtp.example.com" />
+                        <Label Grid.Row="3" Text="SMTP port" VerticalOptions="Center" />
+                        <Entry x:Name="SmtpPortEntry" Grid.Row="3" Grid.Column="1" Keyboard="Numeric" Placeholder="25" />
+                        <Label Grid.Row="4" Text="Username" VerticalOptions="Center" />
+                        <Entry x:Name="UsernameEntry" Grid.Row="4" Grid.Column="1" Placeholder="Optional" />
+                        <Label Grid.Row="5" Text="Password" VerticalOptions="Center" />
+                        <Entry x:Name="PasswordEntry" Grid.Row="5" Grid.Column="1" IsPassword="True" Placeholder="Optional" />
+                    </Grid>
                 </VerticalStackLayout>
                 <Label
                     x:Name="ConnectionStatusLabel"
@@ -94,7 +99,7 @@
                     FontSize="24"
                     HorizontalOptions="End"
                     SemanticProperties.Description="Save connection settings"
-                    Text="&#xF680;"
+                    Text="{x:Static fonts:FluentRegular.save_28}"
                     TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Primary}}"
                     ToolTipProperties.Text="Save connection settings" />
             </VerticalStackLayout>

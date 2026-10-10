@@ -15,6 +15,9 @@ public sealed record MailConnectionSettings(
     public const string LocalhostPreset = "Localhost";
     public const string GmailPreset = "Gmail";
     public const string OutlookPreset = "Outlook";
+    public const string YahooPreset = "Yahoo";
+    public const string ICloudPreset = "iCloud";
+    public const string ProtonPreset = "Proton";
 
     private const string ImapHostKey = "mail.imap.host";
     private const string ImapPortKey = "mail.imap.port";

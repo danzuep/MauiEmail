@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:fonts="clr-namespace:OutlookClone.Resources.Fonts">
+
+    <FontImageSource
+        x:Key="FontIconNavigation"
+        FontFamily="FluentRegular"
+        Glyph="{x:Static fonts:FluentRegular.navigation_24}"
+        Color="{AppThemeBinding Dark={StaticResource White},
+                                Light={StaticResource Black}}" />
+
+    <FontImageSource
+        x:Key="FontIconSettings"
+        FontFamily="FluentRegular"
+        Glyph="{x:Static fonts:FluentRegular.settings_20}"
+        Color="{AppThemeBinding Dark={StaticResource White},
+                                Light={StaticResource Black}}" />
+
+    <FontImageSource
+        x:Key="FontIconBack"
+        FontFamily="FluentRegular"
+        Glyph="{x:Static fonts:FluentRegular.arrow_left_20}"
+        Color="{AppThemeBinding Dark={StaticResource White},
+                                Light={StaticResource Black}}" />
+
+    <FontImageSource
+        x:Key="FontIconSave"
+        FontFamily="FluentRegular"
+        Glyph="{x:Static fonts:FluentRegular.save_28}"
+        Color="{AppThemeBinding Dark={StaticResource White},
+                                Light={StaticResource Black}}" />
+
+    <FontImageSource
+        x:Key="FontIconSend"
+        FontFamily="FluentRegular"
+        Glyph="{x:Static fonts:FluentRegular.send_28}"
+        Color="{AppThemeBinding Dark={StaticResource Gray200},
+                                Light={StaticResource Gray200}}" />
+
+    <FontImageSource
+        x:Key="FontIconSun"
+        Glyph="&#x263C;"
+        Color="{AppThemeBinding Dark={StaticResource Primary},
+                                Light={StaticResource Gray200}}" />
+
+    <FontImageSource
+        x:Key="FontIconMoon"
+        Glyph="&#x263E;"
+        Color="{AppThemeBinding Dark={StaticResource Gray600},
+                                Light={StaticResource White}}" />
+
+</ResourceDictionary>

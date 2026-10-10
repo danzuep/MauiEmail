@@ -73,13 +73,31 @@ public partial class SettingsPage : ContentPage
                 ImapHostEntry.Text = "imap.gmail.com";
                 ImapPortEntry.Text = "993";
                 SmtpHostEntry.Text = "smtp.gmail.com";
-                SmtpPortEntry.Text = "587";
+                SmtpPortEntry.Text = "587"; // 465
                 break;
             case MailConnectionSettings.OutlookPreset:
                 ImapHostEntry.Text = "outlook.office365.com";
                 ImapPortEntry.Text = "993";
                 SmtpHostEntry.Text = "smtp-mail.outlook.com";
                 SmtpPortEntry.Text = "587";
+                break;
+            case MailConnectionSettings.YahooPreset:
+                ImapHostEntry.Text = "imap.mail.yahoo.com";
+                ImapPortEntry.Text = "993";
+                SmtpHostEntry.Text = "smtp.mail.yahoo.com";
+                SmtpPortEntry.Text = "587"; // 465
+                break;
+            case MailConnectionSettings.ICloudPreset:
+                ImapHostEntry.Text = "imap.mail.me.com";
+                ImapPortEntry.Text = "993";
+                SmtpHostEntry.Text = "smtp.mail.me.com";
+                SmtpPortEntry.Text = "587"; // 465
+                break;
+            case MailConnectionSettings.ProtonPreset:
+                ImapHostEntry.Text = "127.0.0.1";
+                ImapPortEntry.Text = "1143";
+                SmtpHostEntry.Text = "127.0.0.1";
+                SmtpPortEntry.Text = "1025";
                 break;
             case MailConnectionSettings.DemoPreset:
                 break;
@@ -100,6 +118,9 @@ public partial class SettingsPage : ContentPage
         MailConnectionSettings.LocalhostPreset => MailConnectionSettings.LocalhostPreset,
         MailConnectionSettings.GmailPreset => MailConnectionSettings.GmailPreset,
         MailConnectionSettings.OutlookPreset => MailConnectionSettings.OutlookPreset,
+        MailConnectionSettings.YahooPreset => MailConnectionSettings.YahooPreset,
+        MailConnectionSettings.ICloudPreset => MailConnectionSettings.ICloudPreset,
+        MailConnectionSettings.ProtonPreset => MailConnectionSettings.ProtonPreset,
         _ => MailConnectionSettings.DemoPreset
     };
 

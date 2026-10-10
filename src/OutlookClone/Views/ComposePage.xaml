@@ -54,7 +54,7 @@
             Grid.Row="5"
             FontSize="12"
             Text="{Binding StatusMessage}"
-            TextColor="{StaticResource Tertiary}"
+            TextColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource White}}"
             VerticalOptions="Center" />
         <Button
             Grid.Row="6"
@@ -62,7 +62,7 @@
             Command="{Binding SendMailCommand}"
             FontSize="24"
             SemanticProperties.Description="Send email"
-            Text="&#x1F4E8;"
+            ImageSource="{StaticResource FontIconSend}"
             TextColor="White"
             ToolTipProperties.Text="Send email" />
     </Grid>
