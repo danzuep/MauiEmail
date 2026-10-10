@@ -18,17 +18,16 @@
                 TextColor="White"
                 VerticalOptions="Center" />
             <Button
-                x:Name="ThemeToggleButton"
+                x:Name="SettingsButton"
                 Grid.Column="1"
-                Padding="8"
                 BackgroundColor="Transparent"
-                Clicked="OnThemeToggleClicked"
-                FontSize="20"
-                HeightRequest="40"
-                SemanticProperties.Description="Toggle light and dark theme"
+                Clicked="OnSettingsClicked"
+                FontFamily="FluentRegular"
+                FontSize="24"
+                SemanticProperties.Description="Open settings"
+                Text="&#xf6aa;"
                 TextColor="White"
-                ToolTipProperties.Text="Toggle light and dark theme"
-                WidthRequest="40" />
+                ToolTipProperties.Text="Settings" />
             <Entry
                 x:Name="SearchEntry"
                 BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"

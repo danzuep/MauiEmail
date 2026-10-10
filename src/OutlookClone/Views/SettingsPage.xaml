@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="OutlookClone.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Settings">
+    <VerticalStackLayout Padding="24" Spacing="24">
+        <Grid ColumnDefinitions="Auto,*">
+            <Button
+                Padding="8"
+                BackgroundColor="Transparent"
+                Clicked="OnBackClicked"
+                FontSize="22"
+                SemanticProperties.Description="Back to inbox"
+                Text="&#x2190;"
+                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}"
+                ToolTipProperties.Text="Back to inbox" />
+            <Label
+                Grid.Column="1"
+                FontAttributes="Bold"
+                FontSize="22"
+                HorizontalOptions="Center"
+                Text="Settings"
+                VerticalOptions="Center" />
+        </Grid>
+
+        <VerticalStackLayout Spacing="12">
+            <Label
+                FontAttributes="Bold"
+                FontSize="18"
+                Text="Appearance" />
+            <Grid
+                ColumnDefinitions="Auto,Auto,Auto"
+                ColumnSpacing="12"
+                HorizontalOptions="Center">
+                <Label
+                    FontSize="24"
+                    SemanticProperties.Description="Light theme"
+                    Text="&#x263C;"
+                    TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray200}}"
+                    VerticalOptions="Center" />
+                <Switch
+                    x:Name="ThemeSwitch"
+                    Grid.Column="1"
+                    SemanticProperties.Description="Switch between light and dark themes"
+                    Toggled="OnThemeToggled"
+                    VerticalOptions="Center" />
+                <Label
+                    Grid.Column="2"
+                    FontSize="24"
+                    SemanticProperties.Description="Dark theme"
+                    Text="&#x263E;"
+                    TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource White}}"
+                    VerticalOptions="Center" />
+            </Grid>
+        </VerticalStackLayout>
+    </VerticalStackLayout>
+</ContentPage>

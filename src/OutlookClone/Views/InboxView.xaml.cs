@@ -20,7 +20,6 @@ public partial class InboxView : ContentView
         InitializeComponent();
         BindingContext = this;
         FilterPanel.Dismissed += OnFilterPanelDismissed;
-        UpdateThemeToggle();
     }
 
     public ObservableCollection<Models.Email> Emails { get; } = new();
@@ -217,27 +216,8 @@ public partial class InboxView : ContentView
         });
     }
 
-    private void OnThemeToggleClicked(object? sender, EventArgs e)
+    private async void OnSettingsClicked(object? sender, EventArgs e)
     {
-        var application = Application.Current;
-        if (application is null)
-            return;
-
-        var currentTheme = application.UserAppTheme == AppTheme.Unspecified
-            ? application.RequestedTheme
-            : application.UserAppTheme;
-        application.UserAppTheme = currentTheme == AppTheme.Dark ? AppTheme.Light : AppTheme.Dark;
-        UpdateThemeToggle();
-    }
-
-    private void UpdateThemeToggle()
-    {
-        var application = Application.Current;
-        var currentTheme = application?.UserAppTheme is AppTheme.Light or AppTheme.Dark
-            ? application.UserAppTheme
-            : application?.RequestedTheme ?? AppTheme.Light;
-
-        ThemeToggleButton.Text = currentTheme == AppTheme.Dark ? "\u263C" : "\u263E";
-        ToolTipProperties.SetText(ThemeToggleButton, currentTheme == AppTheme.Dark ? "Switch to light theme" : "Switch to dark theme");
+        await Shell.Current.GoToAsync(nameof(SettingsPage));
     }
 }
