@@ -15,6 +15,7 @@ public partial class InboxView : ContentView
     private SearchFields _activeSearchFields = SearchFields.Subject;
     private DateTime? _activeDeliveredBefore;
     private DateTime? _activeDeliveredAfter;
+    private List<Models.Email>? _demoEmails;
 
     public InboxView()
     {
@@ -58,27 +59,39 @@ public partial class InboxView : ContentView
         try
         {
             var connectionSettings = await MailConnectionSettings.LoadAsync();
-            using var receiver = string.IsNullOrWhiteSpace(connectionSettings.Username) && string.IsNullOrWhiteSpace(connectionSettings.Password)
-                ? ImapReceiver.Create(connectionSettings.ImapHost, connectionSettings.ImapPort)
-                : ImapReceiver.Create(connectionSettings.ImapHost, connectionSettings.ImapPort, connectionSettings.Username, connectionSettings.Password);
-            IMailReader mailReader = receiver.ReadMail;
-            var searchQuery = CreateSearchQuery(
-                _activeSearchFields,
-                _activeSearchText,
-                _activeDeliveredBefore,
-                _activeDeliveredAfter);
-            if (searchQuery is not null)
-                mailReader = mailReader.Query(searchQuery);
+            if (connectionSettings.Preset == MailConnectionSettings.DemoPreset)
+            {
+                _demoEmails ??= LoadDemoEmails();
+                var filteredEmails = FilterDemoEmails(_demoEmails).ToList();
+                var page = filteredEmails.Skip(Emails.Count).Take(PageSize).ToList();
+                foreach (var email in page)
+                    Emails.Add(email);
+                LoadMoreButton.IsVisible = filteredEmails.Count > Emails.Count;
+            }
+            else
+            {
+                using var receiver = string.IsNullOrWhiteSpace(connectionSettings.Username) && string.IsNullOrWhiteSpace(connectionSettings.Password)
+                    ? ImapReceiver.Create(connectionSettings.ImapHost, connectionSettings.ImapPort)
+                    : ImapReceiver.Create(connectionSettings.ImapHost, connectionSettings.ImapPort, connectionSettings.Username, connectionSettings.Password);
+                IMailReader mailReader = receiver.ReadMail;
+                var searchQuery = CreateSearchQuery(
+                    _activeSearchFields,
+                    _activeSearchText,
+                    _activeDeliveredBefore,
+                    _activeDeliveredAfter);
+                if (searchQuery is not null)
+                    mailReader = mailReader.Query(searchQuery);
 
-            var messages = await mailReader
-                .Skip(Emails.Count)
-                .Take(PageSize)
-                .GetMimeMessagesAsync();
-            var emails = messages.Convert().ToList();
-            foreach (var email in emails)
-                Emails.Add(email);
+                var messages = await mailReader
+                    .Skip(Emails.Count)
+                    .Take(PageSize)
+                    .GetMimeMessagesAsync();
+                var emails = messages.Convert().ToList();
+                foreach (var email in emails)
+                    Emails.Add(email);
 
-            LoadMoreButton.IsVisible = emails.Count == PageSize;
+                LoadMoreButton.IsVisible = emails.Count == PageSize;
+            }
         }
         catch (Exception exception)
         {
@@ -191,6 +204,78 @@ public partial class InboxView : ContentView
         return query;
     }
 
+    private static List<Models.Email> LoadDemoEmails()
+    {
+        string[] senders = [
+            "Alex Morgan <alex@example.test>",
+            "Jamie Chen <jamie@example.test>",
+            "Riley Patel <riley@example.test>",
+            "Taylor Brooks <taylor@example.test>",
+            "Casey Rivera <casey@example.test>",
+            "Jordan Kim <jordan@example.test>"];
+        string[] subjects = [
+            "Project update", "Invoice 1042", "Meeting notes", "Travel itinerary",
+            "Design review", "Weekly summary", "Order confirmation", "Account notice"];
+        string[] bodies = [
+            "Here is the latest update. The team finished the first milestone and is reviewing the remaining tasks.",
+            "Please review the attached invoice details and let us know if anything needs to be corrected.",
+            "Notes from today's meeting: confirm owners, update the schedule, and share the revised plan.",
+            "Your itinerary is ready. Departure is in the morning, and the hotel details are included below.",
+            "The design review is scheduled for next week. Please add comments before the meeting.",
+            "This week's summary includes completed work, open questions, and priorities for the next sprint.",
+            "Your order has been confirmed and is being prepared. Tracking information will follow shortly.",
+            "There is an update to your account profile. Please review the details when convenient."];
+        string[] recipients = [
+            "you@example.test", "team@example.test", "sam@example.test", "support@example.test"];
+        var random = new Random(0x51A7);
+        var now = DateTimeOffset.Now;
+
+        return Enumerable.Range(0, 40)
+            .Select(index =>
+            {
+                var bodyIndex = random.Next(bodies.Length);
+                var received = now.AddDays(-random.Next(0, 46))
+                    .AddHours(-random.Next(0, 24))
+                    .AddMinutes(-random.Next(0, 60));
+                return new Models.Email
+                {
+                    From = senders[random.Next(senders.Length)],
+                    To = recipients[random.Next(recipients.Length)],
+                    Cc = index % 4 == 0 ? "project@example.test" : string.Empty,
+                    Bcc = index % 7 == 0 ? "archive@example.test" : string.Empty,
+                    Subject = subjects[(bodyIndex + index) % subjects.Length],
+                    Date = received.ToString("R"),
+                    BodyText = bodies[bodyIndex],
+                    BodyHtml = bodies[bodyIndex]
+                };
+            })
+            .ToList();
+    }
+
+    private IEnumerable<Models.Email> FilterDemoEmails(IEnumerable<Models.Email> emails)
+    {
+        var hasText = !string.IsNullOrWhiteSpace(_activeSearchText);
+        var hasDateFilters = _activeDeliveredBefore.HasValue || _activeDeliveredAfter.HasValue;
+        if (!hasText && !hasDateFilters)
+            return emails;
+
+        return emails.Where(email =>
+        {
+            var textMatch = hasText &&
+                ((_activeSearchFields.HasFlag(SearchFields.From) &&
+                  (email.From.Contains(_activeSearchText, StringComparison.OrdinalIgnoreCase) ||
+                   email.Cc.Contains(_activeSearchText, StringComparison.OrdinalIgnoreCase) ||
+                   email.Bcc.Contains(_activeSearchText, StringComparison.OrdinalIgnoreCase))) ||
+                 (_activeSearchFields.HasFlag(SearchFields.To) && email.To.Contains(_activeSearchText, StringComparison.OrdinalIgnoreCase)) ||
+                 (_activeSearchFields.HasFlag(SearchFields.Subject) && email.Subject.Contains(_activeSearchText, StringComparison.OrdinalIgnoreCase)) ||
+                 (_activeSearchFields.HasFlag(SearchFields.Message) && email.BodyText.Contains(_activeSearchText, StringComparison.OrdinalIgnoreCase)));
+            var received = DateTimeOffset.TryParse(email.Date, out var parsedDate) ? parsedDate.Date : DateTimeOffset.MinValue;
+            var beforeMatch = _activeDeliveredBefore.HasValue && received < _activeDeliveredBefore.Value.Date;
+            var afterMatch = _activeDeliveredAfter.HasValue && received >= _activeDeliveredAfter.Value.Date;
+            return textMatch || beforeMatch || afterMatch;
+        });
+    }
+
     [Flags]
     private enum SearchFields
     {
@@ -201,7 +286,8 @@ public partial class InboxView : ContentView
         Message = 8,
         DeliveredBefore = 16,
         DeliveredAfter = 32,
-        Text = From | To | Subject | Message
+        Text = From | To | Subject | Message,
+        Dates = DeliveredBefore | DeliveredAfter
     }
 
     private async void OnComposeClicked(object? sender, EventArgs e)

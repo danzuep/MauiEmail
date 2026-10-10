@@ -27,7 +27,7 @@
 
             <VerticalStackLayout Spacing="12">
                 <Label FontAttributes="Bold" FontSize="18" Text="Appearance" />
-                <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="12" HorizontalOptions="Center">
+                <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="12" HorizontalOptions="End">
                     <Label
                         FontSize="24"
                         SemanticProperties.Description="Light theme"
@@ -51,7 +51,24 @@
             </VerticalStackLayout>
             <VerticalStackLayout Spacing="12">
                 <Label FontAttributes="Bold" FontSize="18" Text="Mail server" />
-                <Grid ColumnDefinitions="*,100" ColumnSpacing="12" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                <Picker
+                    x:Name="PresetPicker"
+                    Title="Choose default settings"
+                    SelectedIndexChanged="OnPresetChanged">
+                    <Picker.Items>
+                        <x:String>Demo</x:String>
+                        <x:String>Localhost</x:String>
+                        <x:String>Gmail</x:String>
+                        <x:String>Outlook</x:String>
+                    </Picker.Items>
+                </Picker>
+                <Label
+                    x:Name="DemoApiLabel"
+                    IsVisible="False"
+                    Text="Read-only local sample inbox. Sending is disabled."
+                    TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray200}}" />
+                <VerticalStackLayout x:Name="MailServerFields" Spacing="12">
+                <Grid ColumnDefinitions="*,120" ColumnSpacing="12" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
                     <Label Grid.Row="0" Text="IMAP host" VerticalOptions="Center" />
                     <Entry x:Name="ImapHostEntry" Grid.Row="0" Grid.Column="1" Placeholder="imap.example.com" />
                     <Label Grid.Row="1" Text="IMAP port" VerticalOptions="Center" />
@@ -65,14 +82,21 @@
                     <Label Grid.Row="5" Text="Password" VerticalOptions="Center" />
                     <Entry x:Name="PasswordEntry" Grid.Row="5" Grid.Column="1" IsPassword="True" Placeholder="Optional" />
                 </Grid>
+                </VerticalStackLayout>
                 <Label
                     x:Name="ConnectionStatusLabel"
                     FontSize="12"
                     TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray200}}" />
                 <Button
+                    x:Name="SaveConnectionButton"
                     Clicked="OnSaveConnectionClicked"
+                    FontFamily="FluentRegular"
+                    FontSize="24"
                     HorizontalOptions="End"
-                    Text="Save connection" />
+                    SemanticProperties.Description="Save connection settings"
+                    Text="&#xF680;"
+                    TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Primary}}"
+                    ToolTipProperties.Text="Save connection settings" />
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

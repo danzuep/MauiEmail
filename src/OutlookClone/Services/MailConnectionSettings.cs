@@ -8,14 +8,21 @@ public sealed record MailConnectionSettings(
     string SmtpHost,
     ushort SmtpPort,
     string Username,
-    string Password)
+    string Password,
+    string Preset)
 {
+    public const string DemoPreset = "Demo";
+    public const string LocalhostPreset = "Localhost";
+    public const string GmailPreset = "Gmail";
+    public const string OutlookPreset = "Outlook";
+
     private const string ImapHostKey = "mail.imap.host";
     private const string ImapPortKey = "mail.imap.port";
     private const string SmtpHostKey = "mail.smtp.host";
     private const string SmtpPortKey = "mail.smtp.port";
     private const string UsernameKey = "mail.username";
     private const string PasswordKey = "mail.password";
+    private const string PresetKey = "mail.preset";
 
     public static async Task<MailConnectionSettings> LoadAsync()
     {
@@ -26,7 +33,8 @@ public sealed record MailConnectionSettings(
             Preferences.Default.Get(SmtpHostKey, "localhost"),
             ReadPort(SmtpPortKey, 25),
             Preferences.Default.Get(UsernameKey, string.Empty),
-            password);
+            password,
+            Preferences.Default.Get(PresetKey, DemoPreset));
     }
 
     public async Task SaveAsync()
@@ -36,6 +44,7 @@ public sealed record MailConnectionSettings(
         Preferences.Default.Set(SmtpHostKey, SmtpHost);
         Preferences.Default.Set(SmtpPortKey, (int)SmtpPort);
         Preferences.Default.Set(UsernameKey, Username);
+        Preferences.Default.Set(PresetKey, Preset);
 
         if (string.IsNullOrEmpty(Password))
             SecureStorage.Default.Remove(PasswordKey);

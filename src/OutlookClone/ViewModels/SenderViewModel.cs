@@ -52,6 +52,11 @@ namespace OutlookClone.ViewModels
             try
             {
                 var connectionSettings = await MailConnectionSettings.LoadAsync();
+                if (connectionSettings.Preset == MailConnectionSettings.DemoPreset)
+                {
+                    StatusMessage = "The local Demo inbox is read-only and cannot send email.";
+                    return;
+                }
                 using var smtpSender = string.IsNullOrWhiteSpace(connectionSettings.Username) && string.IsNullOrWhiteSpace(connectionSettings.Password)
                     ? SmtpSender.Create(connectionSettings.SmtpHost, connectionSettings.SmtpPort)
                     : SmtpSender.Create(connectionSettings.SmtpHost, connectionSettings.SmtpPort, connectionSettings.Username, connectionSettings.Password);
