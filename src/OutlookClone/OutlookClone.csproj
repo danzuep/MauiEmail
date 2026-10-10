@@ -18,7 +18,7 @@
 		<ApplicationTitle>OutlookClone</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>danzuep.zuemail.app</ApplicationId>
+		<ApplicationId>danzuep.mauiemail.app</ApplicationId>
 		<ApplicationIdGuid>a1967096-54ca-4dec-aa31-f6a3fe97b570</ApplicationIdGuid>
 
 		<!-- Versions -->
@@ -33,7 +33,7 @@
 		<TargetPlatformMinVersion Condition="$(TargetFramework.Contains('-windows'))">10.0.17763.0</TargetPlatformMinVersion>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+	<PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true' or '$(Configuration)' == 'Release'">
 		<TargetFrameworks>$(TargetFrameworks);$(NetVersion)-android</TargetFrameworks>
 	</PropertyGroup>
 
