@@ -40,7 +40,7 @@ namespace OutlookClone.ViewModels
             FromTextBox = "from@localhost";
             ToTextBox = "to@localhost";
             SubjectTextBox = "Hey";
-            MessageTextBox = "Hi.";
+            MessageTextBox = "<p>Hi.</p>";
 #endif
         }
 
